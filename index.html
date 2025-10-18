@@ -1,125 +1,480 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hugo's Aphorism Note</title>
-  <style>
-    body {
-      font-family: 'Pretendard', sans-serif;
-      background-color: #cce7ff; /* 부드러운 하늘색 */
-      color: #003366; /* 어두운 남색 계열 텍스트 */
-      margin: 0;
-      padding: 40px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Hugo's 격언 노트 — Short Aphorisms</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#9ad3bc; --muted:#98a0aa; --glass: rgba(255,255,255,0.03);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family: "Noto Sans KR", Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: linear-gradient(180deg,#071028 0%, #071b2b 60%);
+    color:#e6eef6;
+    -webkit-font-smoothing:antialiased;
+    padding:28px;
+    min-height:100vh;
+    display:flex;
+    gap:20px;
+    align-items:flex-start;
+    justify-content:center;
+  }
+  .app{
+    width:980px;
+    max-width:96%;
+    display:grid;
+    grid-template-columns: 1fr 360px;
+    gap:20px;
+  }
 
-    h1 {
-      color: #002244;
-      margin-bottom: 20px;
-      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
-    }
+  header{grid-column:1/-1; margin-bottom:6px}
+  h1{margin:0; font-size:20px; letter-spacing:0.4px}
+  p.sub{margin:6px 0 0; color:var(--muted); font-size:13px}
 
-    #aphorismInput {
-      width: 300px;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #003366;
-      background-color: #f8fbff;
-      color: #003366;
-      margin-right: 10px;
-      font-size: 14px;
-    }
+  .panel{
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border:1px solid rgba(255,255,255,0.04);
+    padding:14px;
+    border-radius:12px;
+    box-shadow: 0 6px 18px rgba(2,6,23,0.6);
+  }
 
-    button {
-      background-color: #004c99; /* 하늘색 배경에 어울리는 짙은 파랑 */
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background-color 0.3s ease;
-    }
+  /* editor */
+  .editor textarea{
+    width:100%;
+    min-height:120px;
+    resize:vertical;
+    background:var(--glass);
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,0.03);
+    color:inherit;
+    padding:10px;
+    font-size:15px;
+  }
+  .row{display:flex; gap:8px; margin-top:10px; align-items:center}
+  .row .input{
+    flex:1;
+  }
+  .input input{
+    width:100%;
+    padding:9px 10px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,0.04);
+    background:transparent;
+    color:inherit;
+    font-size:14px;
+  }
+  button.btn{
+    background:linear-gradient(180deg,var(--accent), #7fc4aa);
+    color:#042028;
+    border:none;
+    padding:10px 12px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:600;
+  }
+  button.ghost{
+    background:transparent;
+    color:var(--muted);
+    border:1px solid rgba(255,255,255,0.03);
+    padding:8px 10px;
+    border-radius:8px;
+    cursor:pointer;
+  }
 
-    button:hover {
-      background-color: #0066cc; /* 마우스 오버 시 조금 더 밝은 파랑 */
-    }
+  /* list */
+  .list-wrap{overflow:auto; max-height:64vh; padding:6px; margin-top:8px}
+  ul.aph-list{list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px}
+  li.aph{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01));
+    border-radius:10px;
+    padding:10px;
+    border:1px solid rgba(255,255,255,0.03);
+    cursor:grab;
+  }
+  li.aph.dragging{opacity:0.6}
+  .meta{width:46px; text-align:center; font-size:12px; color:var(--muted)}
+  .content{flex:1}
+  .content p{margin:0; font-size:15px}
+  .tags{margin-top:6px; display:flex; gap:6px; flex-wrap:wrap}
+  .tag{font-size:12px; color:#053; background:rgba(255,255,255,0.03); padding:4px 6px; border-radius:6px; color:var(--muted)}
+  .controls{display:flex; gap:6px; margin-left:6px; align-items:center}
+  .icon-btn{background:transparent; border:none; color:var(--muted); cursor:pointer; padding:6px; border-radius:6px}
+  .fav{color:#ffde59}
+  .small{font-size:12px;color:var(--muted)}
 
-    ul {
-      list-style-type: none;
-      padding: 0;
-      width: 400px;
-      margin-top: 30px;
-    }
+  /* right column */
+  .right .card{margin-bottom:12px}
+  .random{font-size:14px; padding:12px; border-radius:8px; background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.01)); text-align:center}
+  .tools{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+  input[type="file"]{display:none}
+  .hint{font-size:12px; color:var(--muted); margin-top:8px}
+  footer.small{grid-column:1/-1; text-align:right; color:var(--muted); font-size:12px; margin-top:6px}
 
-    li {
-      background-color: rgba(255, 255, 255, 0.8);
-      border-radius: 8px;
-      padding: 10px;
-      margin-bottom: 8px;
-      box-shadow: 2px 2px 5px rgba(0, 51, 102, 0.2);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    li span {
-      flex: 1;
-    }
-
-    .deleteBtn {
-      background-color: #ff6666;
-      border: none;
-      border-radius: 5px;
-      color: white;
-      padding: 5px 10px;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    .deleteBtn:hover {
-      background-color: #ff3333;
-    }
-  </style>
+  @media (max-width:880px){
+    .app{grid-template-columns:1fr; }
+    .right{order:2}
+  }
+</style>
 </head>
 <body>
-  <h1>Hugo's Aphorism Note - Short Aphorisms</h1>
+  <div class="app">
+    <header>
+      <h1>격언 노트 — Short Aphorisms</h1>
+      <p class="sub">짧은 깨달음들을 모으고, 다듬고, 꺼내어 읽는 곳. 마우스로 추가하고, 끌어 정렬하고, 내보내세요.</p>
+    </header>
 
-  <div>
-    <input type="text" id="aphorismInput" placeholder="짧은 격언을 입력하세요">
-    <button onclick="addAphorism()">추가</button>
+    <section class="panel editor">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <strong>새 격언 추가</strong>
+        <div class="small">Ctrl/Cmd + Enter로 빠르게 추가</div>
+      </div>
+
+      <textarea id="txt" placeholder="사소한 깨달음 한 줄을 입력해 보세요. (예: '침묵은 때로 가장 선명한 대답이다.')"></textarea>
+
+      <div class="row">
+        <div class="input"><input id="tagInput" placeholder="태그(쉼표로 구분) — 예: 삶,관계,습관" /></div>
+        <button class="btn" id="addBtn">추가</button>
+        <button class="ghost" id="clearAll">모두 삭제</button>
+      </div>
+
+      <div class="row" style="margin-top:12px">
+        <input id="search" class="input" placeholder="검색: 단어/태그로 필터" style="padding:9px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.03); color:inherit"/>
+        <div style="display:flex;gap:8px">
+          <button class="ghost" id="sortFav">즐겨찾기 우선</button>
+          <button class="ghost" id="shuffle">랜덤 보기</button>
+        </div>
+      </div>
+
+      <div class="list-wrap">
+        <ul id="aphList" class="aph-list"></ul>
+      </div>
+    </section>
+
+    <aside class="panel right">
+      <div class="card random">
+        <div style="font-size:13px;color:var(--muted)">오늘의 격언</div>
+        <div id="randomText" style="margin-top:10px;font-weight:700;font-size:16px">— 클릭하여 무작위로 꺼내세요 —</div>
+        <div style="margin-top:10px">
+          <button class="btn" id="randBtn">무작위 꺼내기</button>
+          <button class="ghost" id="copyRandom">복사</button>
+        </div>
+      </div>
+
+      <div class="card panel">
+        <strong>내보내기 / 가져오기</strong>
+        <div class="tools" style="margin-top:8px">
+          <button class="btn" id="exportJson">JSON 내보내기</button>
+          <button class="btn" id="downloadTxt">텍스트 다운로드</button>
+          <label for="importFile" class="ghost" style="text-align:center; padding:9px; border-radius:8px; cursor:pointer;">가져오기
+            <input id="importFile" type="file" accept="application/json"/>
+          </label>
+          <button class="ghost" id="clearLocal">로컬 초기화</button>
+        </div>
+        <div class="hint">로컬에 자동 저장됩니다. GitHub에 올리려면 이 파일을 repo에 업로드하세요.</div>
+      </div>
+
+      <div class="card panel">
+        <strong>사용 팁</strong>
+        <div class="hint">
+          • 버튼 클릭으로 항목 선택/편집 • 항목을 드래그해서 위치 변경 가능 • 즐겨찾기 별표로 표시
+        </div>
+      </div>
+    </aside>
+
+    <footer class="small">간단한 로컬 앱 — 휴고의 사색을 위한 공간</footer>
   </div>
 
-  <ul id="aphorismList"></ul>
+<script>
+/* 간단한 로컬 DB (localStorage) 기반 격언 노트 */
+const STORAGE_KEY = 'aphorisms_v1_hugo';
 
-  <script>
-    function addAphorism() {
-      const input = document.getElementById('aphorismInput');
-      const text = input.value.trim();
-      if (text === '') return;
+let state = {
+  items: []
+};
 
-      const list = document.getElementById('aphorismList');
-      const li = document.createElement('li');
+function genId(){ return 'a'+Date.now() + Math.floor(Math.random()*999) }
 
-      const span = document.createElement('span');
-      span.textContent = text;
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    state.items = raw ? JSON.parse(raw) : sampleData();
+  }catch(e){ state.items = sampleData(); }
+}
 
-      const delBtn = document.createElement('button');
-      delBtn.textContent = '삭제';
-      delBtn.className = 'deleteBtn';
-      delBtn.onclick = () => li.remove();
+function save(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.items));
+}
 
-      li.appendChild(span);
-      li.appendChild(delBtn);
-      list.appendChild(li);
+function sampleData(){
+  return [
+    {id:genId(), text:"침묵은 때로 가장 선명한 대답이다.", tags:["침묵","사유"], fav:false, created:Date.now()},
+    {id:genId(), text:"작은 습관이 하루를 지배하고, 하루가 인생을 바꾼다.", tags:["습관"], fav:false, created:Date.now()},
+    {id:genId(), text:"질문이 명확하면 응답도 맑아진다.", tags:["사색"], fav:true, created:Date.now()}
+  ];
+}
 
-      input.value = '';
+/* 렌더링 */
+const listEl = document.getElementById('aphList');
+const txt = document.getElementById('txt');
+const tagInput = document.getElementById('tagInput');
+const addBtn = document.getElementById('addBtn');
+const search = document.getElementById('search');
+
+function render(filter=''){
+  listEl.innerHTML = '';
+  const q = filter.trim().toLowerCase();
+  const items = state.items.filter(it=>{
+    if(!q) return true;
+    return it.text.toLowerCase().includes(q) || (it.tags && it.tags.join(' ').toLowerCase().includes(q));
+  });
+
+  items.forEach((it, idx)=>{
+    const li = document.createElement('li');
+    li.className = 'aph';
+    li.draggable = true;
+    li.dataset.id = it.id;
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.innerHTML = `<div style="font-weight:700">${idx+1}</div><div class="small">${new Date(it.created).toLocaleDateString()}</div>`;
+
+    const content = document.createElement('div');
+    content.className = 'content';
+    const p = document.createElement('p');
+    p.textContent = it.text;
+    content.appendChild(p);
+
+    if(it.tags && it.tags.length){
+      const tags = document.createElement('div');
+      tags.className = 'tags';
+      it.tags.forEach(t=>{
+        const span = document.createElement('span'); span.className='tag'; span.textContent = t;
+        tags.appendChild(span);
+      });
+      content.appendChild(tags);
     }
-  </script>
+
+    const controls = document.createElement('div');
+    controls.className = 'controls';
+
+    const favBtn = document.createElement('button');
+    favBtn.className = 'icon-btn';
+    favBtn.innerHTML = it.fav? '★':'☆';
+    if(it.fav) favBtn.classList.add('fav');
+    favBtn.title='즐겨찾기 토글';
+    favBtn.onclick = () => { toggleFav(it.id); };
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'icon-btn';
+    editBtn.title='편집';
+    editBtn.innerHTML = '✎';
+    editBtn.onclick = () => { enterEdit(it.id); };
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'icon-btn';
+    delBtn.title='삭제';
+    delBtn.innerHTML = '🗑';
+    delBtn.onclick = ()=> { if(confirm('정말 삭제할까요?')) removeItem(it.id); };
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'icon-btn';
+    copyBtn.title='복사';
+    copyBtn.innerHTML='⎘';
+    copyBtn.onclick = ()=> { navigator.clipboard?.writeText(it.text).then(()=>alert('복사됨')) };
+
+    controls.appendChild(favBtn);
+    controls.appendChild(editBtn);
+    controls.appendChild(copyBtn);
+    controls.appendChild(delBtn);
+
+    li.appendChild(meta);
+    li.appendChild(content);
+    li.appendChild(controls);
+
+    /* drag events */
+    li.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', it.id);
+      li.classList.add('dragging');
+    });
+    li.addEventListener('dragend', e => {
+      li.classList.remove('dragging');
+    });
+
+    li.addEventListener('click', (e)=>{
+      // 클릭하면 오른쪽 '오늘의 격언'에 표시
+      document.getElementById('randomText').textContent = it.text;
+    });
+
+    listEl.appendChild(li);
+  });
+
+  // setup drop zone ordering
+  const kids = Array.from(listEl.children);
+  kids.forEach(k=>{
+    k.addEventListener('dragover', e=>{
+      e.preventDefault();
+      const dragging = listEl.querySelector('.dragging');
+      if(!dragging || dragging===k) return;
+      // insert before or after
+      const rect = k.getBoundingClientRect();
+      const mid = rect.top + rect.height/2;
+      if(event.clientY < mid){
+        listEl.insertBefore(dragging, k);
+      }else{
+        listEl.insertBefore(dragging, k.nextSibling);
+      }
+    });
+  });
+}
+
+/* 저장 후 렌더 호출 */
+function persistAndRender(){
+  // read order from DOM and recompose state.items
+  const order = Array.from(listEl.children).map(li=>li.dataset.id);
+  if(order.length === state.items.length){
+    const map = state.items.reduce((s,i)=>{s[i.id]=i; return s}, {});
+    state.items = order.map(id => map[id] || state.items.find(x=>x.id===id)).filter(Boolean);
+  }
+  save();
+  render(search.value);
+}
+
+/* 이벤트 핸들러들 */
+addBtn.addEventListener('click', ()=>{
+  const text = txt.value.trim();
+  if(!text){ alert('문장을 입력하세요.'); txt.focus(); return; }
+  const tags = tagInput.value.split(',').map(s=>s.trim()).filter(Boolean);
+  state.items.unshift({id:genId(), text, tags, fav:false, created:Date.now()});
+  txt.value=''; tagInput.value='';
+  persistAndRender();
+});
+
+txt.addEventListener('keydown', (e)=>{
+  if((e.ctrlKey || e.metaKey) && e.key === 'Enter'){
+    addBtn.click();
+  }
+});
+
+search.addEventListener('input', ()=>render(search.value));
+
+function toggleFav(id){
+  const it = state.items.find(x=>x.id===id);
+  if(!it) return;
+  it.fav = !it.fav;
+  save();
+  render(search.value);
+}
+
+function enterEdit(id){
+  const it = state.items.find(x=>x.id===id);
+  if(!it) return;
+  const newText = prompt('문장 수정', it.text);
+  if(newText === null) return;
+  it.text = newText.trim() || it.text;
+  const newTags = prompt('태그(쉼표 구분)', (it.tags||[]).join(','));
+  if(newTags !== null) it.tags = newTags.split(',').map(s=>s.trim()).filter(Boolean);
+  save();
+  render(search.value);
+}
+
+function removeItem(id){
+  state.items = state.items.filter(x=>x.id!==id);
+  save();
+  render(search.value);
+}
+
+/* 오른쪽 툴들 */
+document.getElementById('randBtn').addEventListener('click', ()=>{
+  if(!state.items.length){ alert('격언이 없습니다. 추가해 주세요.'); return; }
+  const r = state.items[Math.floor(Math.random()*state.items.length)];
+  document.getElementById('randomText').textContent = r.text;
+});
+
+document.getElementById('copyRandom').addEventListener('click', ()=>{
+  const t = document.getElementById('randomText').textContent;
+  if(!t) return alert('먼저 하나 골라 주세요.');
+  navigator.clipboard?.writeText(t).then(()=>alert('복사됨'));
+});
+
+document.getElementById('clearAll').addEventListener('click', ()=>{
+  if(!confirm('모두 삭제하시겠습니까? (복구 불가)')) return;
+  state.items = [];
+  save();
+  render();
+});
+
+document.getElementById('shuffle').addEventListener('click', ()=>{
+  state.items = state.items.sort(()=>Math.random()-0.5);
+  save();
+  render();
+});
+
+document.getElementById('sortFav').addEventListener('click', ()=>{
+  state.items = state.items.slice().sort((a,b)=> (b.fav?1:0) - (a.fav?1:0));
+  save();
+  render();
+});
+
+/* export / import */
+document.getElementById('exportJson').addEventListener('click', ()=>{
+  const data = JSON.stringify(state.items, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download = 'aphorisms.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('downloadTxt').addEventListener('click', ()=>{
+  const txts = state.items.map(i=> `- ${i.text} ${i.tags && i.tags.length ? '['+i.tags.join(',')+']':''}`).join('\n');
+  const blob = new Blob([txts], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download = 'aphorisms.txt'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('importFile').addEventListener('change', (e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const arr = JSON.parse(reader.result);
+      if(!Array.isArray(arr)) throw new Error('올바른 JSON 배열이 아닙니다.');
+      // 간단 합치기
+      const normalized = arr.map(x=>({ id: x.id || genId(), text: x.text||'', tags: x.tags||[], fav: !!x.fav, created: x.created || Date.now() }));
+      state.items = normalized.concat(state.items);
+      save(); render();
+      alert('가져오기 완료');
+    }catch(err){ alert('가져오기 실패: ' + err.message) }
+  };
+  reader.readAsText(f);
+});
+
+/* 초기 로드 */
+load();
+render();
+
+/* 저장 자동 주기 (안정성) */
+window.addEventListener('beforeunload', ()=> save());
+
+/* drag-to-order 저장: 저장 버튼 대신 마우스 업 시 상태 반영 */
+document.addEventListener('mouseup', ()=> {
+  // reorder if needed
+  const order = Array.from(listEl.children).map(li=>li.dataset.id);
+  if(order.length === state.items.length){
+    const map = state.items.reduce((s,i)=>{s[i.id]=i; return s}, {});
+    state.items = order.map(id => map[id] || state.items.find(x=>x.id===id)).filter(Boolean);
+    save();
+    render(search.value);
+  }
+});
+
+</script>
 </body>
 </html>
-
