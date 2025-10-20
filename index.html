@@ -476,6 +476,28 @@ document.addEventListener('mouseup', ()=> {
 });
 
 </script>
+
+  <!-- Firebase SDK 추가 (브라우저 전용) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js"></script>
+
+<script>
+  // Firebase 설정
+  const firebaseConfig = {
+    apiKey: "AIzaSyAWnuySrz9bPYJymGwihKs_ayn8UtEIVhY",
+    authDomain: "hugo-maxim.firebaseapp.com",
+    projectId: "hugo-maxim",
+    storageBucket: "hugo-maxim.firebasestorage.app",
+    messagingSenderId: "706899207773",
+    appId: "1:706899207773:web:5af008604cb2c955314fb4"
+  };
+
+  // Firebase 초기화
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+
 </body>
 </html>
+
 
